@@ -8,5 +8,8 @@ export default defineConfig({
   server: {
     // Always allow network access so phones can reach the dev server
     host: true
+  },
+  preview: {
+    allowedHosts: ['paddu-cart.onrender.com']
   }
 })
