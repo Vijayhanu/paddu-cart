@@ -224,9 +224,7 @@ export const OrderTracker = ({ onBackToMenu }) => {
             <MessageSquare size={18} /> Send Receipt on WhatsApp
           </a>
 
-          <button className="payment-btn cash" onClick={() => alert('Please pay cash (₹' + currentOrder.totalPrice + ') directly to the counter. Thank you!')}>
-            💵 Pay Cash on Delivery
-          </button>
+          
         </div>
       </div>
 
