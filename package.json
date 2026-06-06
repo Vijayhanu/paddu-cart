@@ -6,19 +6,19 @@
   },
   "type": "module",
   "scripts": {
-    "dev": "npx vite",
-    "build": "npx vite build",
-    "preview": "npx vite preview --host",
-    "start": "npx vite preview --host"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "start": "vite preview --host --port ${PORT}"
   },
   "dependencies": {
-    "vite": "^8.0.12",
     "@vitejs/plugin-react": "^6.0.1",
     "firebase": "^12.13.0",
     "lucide-react": "^1.16.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "vite": "^8.0.12",
     "ws": "^8.21.0"
   },
   "devDependencies": {
@@ -29,7 +29,5 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0"
-
-
   }
 }
