@@ -82,13 +82,13 @@ export const OrderTracker = ({ onBackToMenu }) => {
       // Direct navigation triggers the UPI app on mobile devices
       window.location.href = upiLink;
     } else {
-      // On desktop, inform the user to open the link on their phone or use the QR code
-      alert('UPI link can be opened on a mobile device. Please scan the QR code or open this link on your phone.');
+      // On desktop, open the UPI link in a new tab (user can copy or scan QR)
+      window.open(upiLink, '_blank');
     }
-    // Wait 5 seconds for user to complete payment, then open WhatsApp link
+    // Wait 10 seconds for user to complete payment, then open WhatsApp link
     setTimeout(() => {
       window.open(getWhatsAppLink(), '_blank');
-    }, 5000);
+    }, 10000);
   };
 
   const handleFeedbackSubmit = async (e) => {

@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { dbService } from '../services/dbAdapter';
-
+import { mockDbService as dbService } from '../services/mockDbAdapter';
+import menuData from '../../server-data.json';
 const OrderContext = createContext();
 
 export const useOrder = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children }) => {
-  const [menu, setMenu] = useState([]);
+  const [menu, setMenu] = useState(menuData);
   const [orders, setOrders] = useState([]);
   const [cart, setCart] = useState([]);
   const [tableNumber, setTableNumber] = useState('');
@@ -31,13 +31,7 @@ export const OrderProvider = ({ children }) => {
     localStorage.setItem('paddu_theme', theme);
   }, [theme]);
 
-  // Subscribe to real-time menu updates
-  useEffect(() => {
-    const unsubscribe = dbService.subscribeMenu((updatedMenu) => {
-      setMenu(updatedMenu);
-    });
-    return unsubscribe;
-  }, []);
+  // Menu data is static and loaded from server-data.json; no subscription needed.
 
   // Subscribe to real-time orders list (admin view uses this)
   useEffect(() => {
