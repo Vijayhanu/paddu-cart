@@ -1,12 +1,14 @@
 {
   "name": "paddu-cart",
   "private": true,
-  "version": "0.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview --host",
+    "dev": "npx vite",
+    "build": "npx vite build",
+    "preview": "npx vite preview --host",
     "start": "npm run preview --host"
   },
   "dependencies": {
