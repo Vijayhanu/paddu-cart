@@ -1,139 +1,158 @@
 // src/services/mockDbAdapter.js
-// Simple in‑memory mock database for static Render deployment.
-// Mirrors the API of the original dbService but uses localStorage for persistence.
+// A lightweight mock of the original WebSocket‑backed dbAdapter.
+// It stores data in localStorage so the static build can persist state across page reloads.
 
-const STORAGE_KEY = 'paddu_mock_state';
+// Keys used in localStorage
+const MENU_KEY = 'paddu_menu';
+const ORDERS_KEY = 'paddu_orders';
+const SETTINGS_KEY = 'paddu_settings';
+const CONNECTION_KEY = 'paddu_connection';
 
-// Load persisted state or initialise defaults
-function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) {
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      console.error('Failed to parse Paddu mock state', e);
-    }
-  }
-  return {
-    menu: [], // will be overwritten by static menu data on load
-    orders: [],
-    settings: {
-      upiId: '7795143969-2@ybl',
-      whatsappNumber: '+917795143969',
-      preparationTime: '15'
-    },
-    connection: true
-  };
-}
-
-function saveState(state) {
+// Helper to safely parse JSON from localStorage
+function getStored(key, fallback) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
   } catch (e) {
-    console.error('Failed to persist Paddu mock state', e);
+    console.error('[mockDbAdapter] Failed to parse', key, e);
+    return fallback;
   }
 }
 
-let state = loadState();
+function setStored(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.error('[mockDbAdapter] Failed to store', key, e);
+  }
+}
 
-// Helper to notify a Set of callbacks with the latest slice of state
-function notify(set, payload) {
+// Initial seed – if nothing stored yet, fall back to empty structures.
+if (!localStorage.getItem(MENU_KEY)) setStored(MENU_KEY, []);
+if (!localStorage.getItem(ORDERS_KEY)) setStored(ORDERS_KEY, []);
+if (!localStorage.getItem(SETTINGS_KEY))
+  setStored(SETTINGS_KEY, { upiId: '7795143969-2@ybl', whatsappNumber: '+917795143969', preparationTime: '15' });
+if (!localStorage.getItem(CONNECTION_KEY)) setStored(CONNECTION_KEY, true);
+
+// Subscription pools – simple Set of callbacks
+const menuSubs = new Set();
+const ordersSubs = new Set();
+const singleOrderSubs = new Map(); // orderId -> Set(callback)
+const settingsSubs = new Set();
+const connectionSubs = new Set();
+
+function notify(set, data) {
   set.forEach(cb => {
-    try { cb(payload); } catch (e) { console.error('Callback error', e); }
+    try { cb(data); } catch (e) { console.error('[mockDbAdapter] subscriber error', e); }
   });
 }
 
-// ---------------------------------------------------------------------------
-// Public API – matches the original dbService used throughout the app
-// ---------------------------------------------------------------------------
+function notifySingleOrder(orderId, order) {
+  const set = singleOrderSubs.get(orderId);
+  if (set) {
+    set.forEach(cb => {
+      try { cb(order); } catch (e) { console.error('[mockDbAdapter] single order subscriber error', e); }
+    });
+  }
+}
+
 export const mockDbService = {
-  // Connection
-  isConnected: () => true,
-  subscribeConnection: callback => {
-    // Always online in static mode
-    const set = new Set([callback]);
-    callback(true);
-    return () => set.delete(callback);
+  // ---------- Connection ----------
+  isConnected: () => getStored(CONNECTION_KEY, true),
+  subscribeConnection: cb => {
+    connectionSubs.add(cb);
+    cb(true);
+    return () => connectionSubs.delete(cb);
   },
 
-  // Menu – static data loaded from server-data.json (handled by OrderContext)
-  getMenu: async () => state.menu,
-  subscribeMenu: callback => {
-    const set = new Set([callback]);
-    callback(state.menu);
-    return () => set.delete(callback);
+  // ---------- Menu ----------
+  subscribeMenu: cb => {
+    menuSubs.add(cb);
+    cb(getStored(MENU_KEY, []));
+    return () => menuSubs.delete(cb);
   },
+  // Update a single menu item (used by admin UI)
   updateMenuItem: async item => {
-    const idx = state.menu.findIndex(i => i.id === item.id);
-    if (idx >= 0) state.menu[idx] = { ...state.menu[idx], ...item };
-    saveState(state);
-    // Notify any subscribers (if any exist)
-    // In the mock we keep a simple internal Set – this is a no‑op for now.
+    const menu = getStored(MENU_KEY, []);
+    const idx = menu.findIndex(i => i.id === item.id);
+    if (idx >= 0) menu[idx] = { ...menu[idx], ...item };
+    else menu.push(item);
+    setStored(MENU_KEY, menu);
+    notify(menuSubs, menu);
     return true;
   },
   deleteMenuItem: async id => {
-    state.menu = state.menu.filter(i => i.id !== id);
-    saveState(state);
+    let menu = getStored(MENU_KEY, []);
+    menu = menu.filter(i => i.id !== id);
+    setStored(MENU_KEY, menu);
+    notify(menuSubs, menu);
     return true;
   },
 
-  // Orders
-  getOrders: async () => state.orders,
-  subscribeToOrders: callback => {
-    const set = new Set([callback]);
-    callback(state.orders);
-    return () => set.delete(callback);
+  // ---------- Orders ----------
+  subscribeToOrders: cb => {
+    ordersSubs.add(cb);
+    cb(getStored(ORDERS_KEY, []));
+    return () => ordersSubs.delete(cb);
   },
-  subscribeToOrder: (orderId, callback) => {
-    const set = new Set([callback]);
-    const order = state.orders.find(o => o.id === orderId);
-    if (order) callback(order);
-    return () => set.delete(callback);
+  subscribeToOrder: (orderId, cb) => {
+    if (!singleOrderSubs.has(orderId)) singleOrderSubs.set(orderId, new Set());
+    const set = singleOrderSubs.get(orderId);
+    set.add(cb);
+    const orders = getStored(ORDERS_KEY, []);
+    const order = orders.find(o => o.id === orderId);
+    if (order) cb(order);
+    return () => {
+      set.delete(cb);
+      if (set.size === 0) singleOrderSubs.delete(orderId);
+    };
   },
   createOrder: async orderData => {
+    const orders = getStored(ORDERS_KEY, []);
     const newOrder = {
-      id: Date.now().toString(),
-      orderNumber: `#${state.orders.length + 1}`,
+      id: 'order_' + Date.now(),
+      orderNumber: 'PD' + Math.floor(1000 + Math.random() * 9000),
       timestamp: new Date().toISOString(),
       status: 'pending',
-      ...orderData
+      ...orderData,
     };
-    state.orders = [...state.orders, newOrder];
-    saveState(state);
-    // fire subscription callbacks
-    // (simplified – we recreate a fresh Set each call, so just invoke directly)
-    // In a real implementation we would keep a persistent Set.
-    return newOrder;
+    orders.push(newOrder);
+    setStored(ORDERS_KEY, orders);
+    notify(ordersSubs, orders);
+    // also notify any single‑order listeners
+    notifySingleOrder(newOrder.id, newOrder);
+    return { order: newOrder };
   },
   updateOrderStatus: async (orderId, status) => {
-    const idx = state.orders.findIndex(o => o.id === orderId);
-    if (idx >= 0) {
-      state.orders[idx] = { ...state.orders[idx], status };
-      saveState(state);
-      return true;
+    const orders = getStored(ORDERS_KEY, []);
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      order.status = status;
+      setStored(ORDERS_KEY, orders);
+      notify(ordersSubs, orders);
+      notifySingleOrder(orderId, order);
     }
-    return false;
-  },
-
-  // Settings
-  getSettings: async () => state.settings,
-  subscribeSettings: callback => {
-    const set = new Set([callback]);
-    callback(state.settings);
-    return () => set.delete(callback);
-  },
-  saveSettings: async newSettings => {
-    state.settings = { ...state.settings, ...newSettings };
-    saveState(state);
     return true;
   },
 
-  // Feedback (simple placeholder)
+  // ---------- Settings ----------
+  subscribeSettings: cb => {
+    settingsSubs.add(cb);
+    cb(getStored(SETTINGS_KEY, {}));
+    return () => settingsSubs.delete(cb);
+  },
+  saveSettings: async newSettings => {
+    const current = getStored(SETTINGS_KEY, {});
+    const merged = { ...current, ...newSettings };
+    setStored(SETTINGS_KEY, merged);
+    notify(settingsSubs, merged);
+    return true;
+  },
+
+  // ---------- Feedback (optional) ----------
   submitFeedback: async feedback => {
-    // Persist feedback in state for debugging – not used in UI.
-    if (!state.feedback) state.feedback = [];
-    state.feedback.push(feedback);
-    saveState(state);
-    return { ...feedback, id: Date.now().toString() };
+    // For a static demo we simply log it; no persistence needed.
+    console.log('[mockDbAdapter] feedback received', feedback);
+    return { feedback };
   }
 };

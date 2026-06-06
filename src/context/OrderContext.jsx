@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { mockDbService as dbService } from '../services/mockDbAdapter';
-import menuData from '../../server-data.json';
 const OrderContext = createContext();
 
 export const useOrder = () => useContext(OrderContext);
 
 export const OrderProvider = ({ children }) => {
-  const [menu, setMenu] = useState(menuData);
+  const [menu, setMenu] = useState([]);
   const [orders, setOrders] = useState([]);
   const [cart, setCart] = useState([]);
   const [tableNumber, setTableNumber] = useState('');
@@ -31,7 +30,28 @@ export const OrderProvider = ({ children }) => {
     localStorage.setItem('paddu_theme', theme);
   }, [theme]);
 
-  // Menu data is static and loaded from server-data.json; no subscription needed.
+  // Load menu data from the static JSON placed in the public folder
+  useEffect(() => {
+    fetch('/server-data.json')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to load menu data');
+        return res.json();
+      })
+      .then((data) => {
+        if (data && data.menu) setMenu(data.menu);
+        else setMenu(data);
+      })
+      .catch((err) => {
+        console.error('Error loading menu:', err);
+        setMenu([]);
+      });
+  }, []);
+
+  // Menu data is static now; we keep the original subscription logic disabled.
+
+
+  // (No real‑time menu subscription in static deployment)
+
 
   // Subscribe to real-time orders list (admin view uses this)
   useEffect(() => {
