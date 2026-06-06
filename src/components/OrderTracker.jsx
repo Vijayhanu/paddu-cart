@@ -1,0 +1,327 @@
+import React, { useState } from 'react';
+import { useOrder } from '../context/OrderContext';
+import { QRCodeSVG } from 'qrcode.react';
+import { Check, Clock, Utensils, MessageSquare, CreditCard, ChevronRight, X, Star } from 'lucide-react';
+
+export const OrderTracker = ({ onBackToMenu }) => {
+  const { currentOrder, clearCurrentOrder, settings, submitFeedback } = useOrder();
+  const [showUpiModal, setShowUpiModal] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+
+  // Custom confetti dots for order success celebration
+  const [confettiDots, setConfettiDots] = useState([]);
+  React.useEffect(() => {
+    const dots = [];
+    const colors = ['#ff6600', '#ffb300', '#4caf50', '#2196f3', '#e91e63'];
+    for (let i = 0; i < 40; i++) {
+      dots.push({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        delay: `${Math.random() * 1.5}s`,
+        drift: `${(Math.random() - 0.5) * 60}px`
+      });
+    }
+    setConfettiDots(dots);
+  }, []);
+
+  if (!currentOrder) {
+    return (
+      <main className="main-content">
+        <div className="empty-state">
+          <span className="empty-state-icon">🔍</span>
+          <h3>No Active Order</h3>
+          <p>You don't have any active orders right now.</p>
+          <button className="btn-primary mt-4" onClick={onBackToMenu}>
+            Browse Menu
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  // Determine current active status index
+  const statuses = ['Pending', 'Preparing', 'Ready', 'Delivered'];
+  const currentStatusIndex = statuses.indexOf(currentOrder.status);
+
+  // Generate UPI payment deep link
+  const payName = 'Paddu Point';
+  const cleanUpiId = settings.upiId.replace(/\s+/g, '');
+  const upiLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&tn=Paddu%20Point%20Order%20${currentOrder.orderNumber}&cu=INR`;
+
+  // Generate WhatsApp message text
+  const getWhatsAppLink = () => {
+    const itemsText = currentOrder.items
+      .map(item => `• ${item.quantity}x ${item.name} (₹${item.price})`)
+      .join('\n');
+    
+    const typeText = currentOrder.orderType === 'dine-in' 
+      ? `Eat Here (Standing${currentOrder.tableNumber ? `, Name: ${currentOrder.tableNumber}` : ''})` 
+      : 'Parcel / Takeaway';
+
+    const text = `🍽️ *NEW ORDER - PADDU POINT*\n` +
+      `---------------------------------\n` +
+      `*Order Number:* #${currentOrder.orderNumber}\n` +
+      `*Order Type:* ${typeText}\n` +
+      `*Total Price:* ₹${currentOrder.totalPrice}\n\n` +
+      `*Items Ordered:*\n${itemsText}\n` +
+      `---------------------------------\n` +
+      `*Status:* ${currentOrder.status}\n` +
+      `Please confirm my order. Thank you!`;
+
+    const cleanPhone = settings.whatsappNumber.replace(/[^0-9+]/g, '');
+    return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+  };
+
+  const handleFeedbackSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) {
+      alert('Please select a star rating!');
+      return;
+    }
+    const success = await submitFeedback(rating, comment);
+    if (success) {
+      setFeedbackSuccess(true);
+    }
+  };
+
+  // Helper to format timestamps
+  const getFormattedTime = (status) => {
+    const timeField = `time_${status.toLowerCase()}`;
+    if (!currentOrder[timeField]) return '';
+    const date = new Date(currentOrder[timeField]);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div className="tracker-container" style={{ position: 'relative' }}>
+      {/* Confetti Overlay */}
+      <div className="confetti-overlay">
+        {confettiDots.map(dot => (
+          <div
+            key={dot.id}
+            className="confetti-dot"
+            style={{
+              left: dot.left,
+              backgroundColor: dot.color,
+              animationDelay: dot.delay,
+              '--drift': dot.drift
+            }}
+          />
+        ))}
+      </div>
+      {/* Success Banner */}
+      <div className="order-success-card">
+        <div className="animated-success-icon">
+          <Check size={32} />
+        </div>
+        <h3>Order Placed Successfully!</h3>
+        <p className="order-details-meta">Show this order number to the food cart vendor</p>
+        <div className="order-number">#{currentOrder.orderNumber}</div>
+        <p className="order-details-meta">
+          {currentOrder.orderType === 'dine-in' ? (
+            <span>📍 Eat Here (Standing) {currentOrder.tableNumber && <span>- <b>{currentOrder.tableNumber}</b></span>}</span>
+          ) : (
+            <span>🛍️ Parcel - Est. Prep time: <b>{settings.preparationTime} mins</b></span>
+          )}
+        </p>
+      </div>
+
+      {/* Progress Steps Card */}
+      <div className="steps-progress">
+        <h3 style={{ fontSize: '17px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px' }}>
+          Live Order Status
+        </h3>
+        
+        {statuses.map((status, index) => {
+          const isCompleted = index < currentStatusIndex;
+          const isActive = index === currentStatusIndex;
+          const isPending = index > currentStatusIndex;
+          
+          let statusText = '';
+          switch (status) {
+            case 'Pending':
+              statusText = 'Order received by Paddu Point';
+              break;
+            case 'Preparing':
+              statusText = 'Paddus are being roasted fresh on the tawa';
+              break;
+            case 'Ready':
+              statusText = currentOrder.orderType === 'dine-in' 
+                ? 'Roasting complete! Collect your hot plate from the cart!' 
+                : 'Your parcel is packed and ready for pickup!';
+              break;
+            case 'Delivered':
+              statusText = 'Hope you enjoyed the hot paddus!';
+              break;
+          }
+
+          return (
+            <div 
+              key={status} 
+              className={`progress-step ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`}
+            >
+              <div className="step-indicator">
+                {isCompleted ? <Check size={18} /> : index + 1}
+              </div>
+              <div className="step-content">
+                <div className="step-title" style={{ color: isActive ? 'var(--primary)' : 'var(--text-color)' }}>
+                  {status}
+                  {isActive && <span style={{ fontSize: '12px', marginLeft: '8px', color: 'var(--text-muted)' }}>(Current)</span>}
+                </div>
+                <div className="step-time" style={{ fontSize: '13px' }}>{statusText}</div>
+                {(isCompleted || isActive) && currentOrder[`time_${status.toLowerCase()}`] && (
+                  <div style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 500, marginTop: '2px' }}>
+                    {getFormattedTime(status)}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Cart Summary Breakdown */}
+      <div className="order-success-card" style={{ textAlign: 'left' }}>
+        <h4 style={{ fontSize: '15px', marginBottom: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+          Items Bill Summary
+        </h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {currentOrder.items.map(item => (
+            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+              <span>{item.quantity}x {item.name}</span>
+              <span style={{ fontWeight: 600 }}>₹{item.price * item.quantity}</span>
+            </div>
+          ))}
+          <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between', fontWeight: 800 }}>
+            <span>Total Paid/Payable</span>
+            <span style={{ color: 'var(--primary)' }}>₹{currentOrder.totalPrice}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Payment and WhatsApp Action Bar */}
+      <div className="payment-section">
+        <h3>Pay & Notify</h3>
+        <p className="order-details-meta" style={{ marginBottom: '16px' }}>
+          Select how you want to settle the payment and notify the food cart
+        </p>
+
+        <div className="payment-methods">
+          <button className="payment-btn upi" onClick={() => setShowUpiModal(true)}>
+            <CreditCard size={18} /> Pay with UPI (GPay / PhonePe / Paytm)
+          </button>
+          
+          <a 
+            href={getWhatsAppLink()} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="payment-btn whatsapp"
+            style={{ textDecoration: 'none' }}
+          >
+            <MessageSquare size={18} /> Send Receipt on WhatsApp
+          </a>
+
+          <button className="payment-btn cash" onClick={() => alert('Please pay cash (₹' + currentOrder.totalPrice + ') directly to the counter. Thank you!')}>
+            💵 Pay Cash on Delivery
+          </button>
+        </div>
+      </div>
+
+      {/* Customer Feedback Card */}
+      {(currentOrder.status === 'Ready' || currentOrder.status === 'Delivered') && (
+        <div className="feedback-section">
+          <h3>How was your Paddu?</h3>
+          <p className="order-details-meta">Help us improve by leaving a rating</p>
+          
+          {feedbackSuccess ? (
+            <div style={{ color: 'var(--success)', fontWeight: 700, marginTop: '16px' }}>
+              🌟 Thank you for your feedback! Enjoy your food!
+            </div>
+          ) : currentOrder.feedbackSubmitted ? (
+            <div style={{ color: 'var(--text-muted)', fontWeight: 600, marginTop: '16px' }}>
+              Feedback already submitted. Thank you!
+            </div>
+          ) : (
+            <form onSubmit={handleFeedbackSubmit} className="mt-2">
+              <div className="rating-stars">
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button
+                    type="button"
+                    key={star}
+                    className={`star-btn ${rating >= star ? 'active' : ''}`}
+                    onClick={() => setRating(star)}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+              <textarea
+                className="feedback-textarea"
+                placeholder="Write your feedback here (e.g. paddus were very crispy!)..."
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+              />
+              <button type="submit" className="feedback-submit-btn">
+                Submit Review
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Back to Menu / Order New Button */}
+      <button 
+        className="payment-btn cash" 
+        style={{ marginTop: '10px', background: 'var(--card-bg)' }}
+        onClick={() => {
+          if (currentOrder.status === 'Delivered') {
+            clearCurrentOrder();
+          }
+          onBackToMenu();
+        }}
+      >
+        {currentOrder.status === 'Delivered' ? 'Order Something Else' : 'Order More Items'}
+      </button>
+
+      {/* UPI QR Payment Modal Pop-up */}
+      {showUpiModal && (
+        <div className="modal-backdrop">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setShowUpiModal(false)}>
+              <X size={18} />
+            </button>
+            
+            <h3 style={{ fontSize: '18px', color: 'var(--text-color)' }}>UPI QR Payment</h3>
+            <p className="order-details-meta">Scan or Click to pay directly</p>
+            
+            {/* Clickable UPI link for mobile, QR for desktop */}
+            <div className="upi-qr-wrapper">
+              <QRCodeSVG value={upiLink} size={200} level="H" />
+            </div>
+
+            <div className="upi-meta-info">
+              <div>Amount to Pay: <b>₹{currentOrder.totalPrice}</b></div>
+              <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>UPI ID: <b>{settings.upiId}</b></div>
+            </div>
+
+            <div className="upi-instructions">
+              <a 
+                href={upiLink}
+                className="btn-primary mt-4" 
+                style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
+              >
+                Open Payment App
+              </a>
+              <p className="order-details-meta mt-2">
+                Works on GPay, PhonePe, Paytm, BHIM and netbanking apps.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

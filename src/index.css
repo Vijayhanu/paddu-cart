@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
+
+:root {
+  --font-primary: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Colors - Warm Palette (Orange, Yellow, Cream) */
+  --primary: hsl(24, 100%, 50%); /* Food Cart Orange */
+  --primary-hover: hsl(24, 100%, 43%);
+  --primary-light: hsl(24, 100%, 96%);
+  --primary-rgb: 255, 102, 0;
+  
+  --secondary: hsl(42, 100%, 53%); /* Warm Golden Yellow */
+  --secondary-hover: hsl(42, 100%, 46%);
+  --secondary-light: hsl(42, 100%, 95%);
+  
+  --accent: hsl(14, 90%, 45%); /* Spicy Red/Brown */
+  
+  --success: hsl(142, 72%, 40%); /* For Ready / Delivered */
+  --success-light: hsl(142, 72%, 95%);
+  --warning: hsl(38, 92%, 50%); /* For Preparing */
+  --warning-light: hsl(38, 92%, 95%);
+  --info: hsl(210, 90%, 50%); /* For Pending */
+  --info-light: hsl(210, 90%, 95%);
+
+  /* Light Theme Specifics */
+  --bg-color: hsl(30, 45%, 98%); /* Cream white background */
+  --bg-secondary: hsl(30, 30%, 94%);
+  --card-bg: #ffffff;
+  --text-color: hsl(24, 30%, 12%);
+  --text-muted: hsl(24, 12%, 46%);
+  --border-color: hsl(24, 18%, 91%);
+  
+  --shadow-sm: 0 2px 8px rgba(255, 102, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(255, 102, 0, 0.06);
+  --shadow-lg: 0 16px 40px rgba(255, 102, 0, 0.1);
+  --shadow-inset: inset 0 2px 4px rgba(0,0,0,0.06);
+  
+  --radius-sm: 10px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-full: 9999px;
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-theme='dark'] {
+  /* Dark Theme Specifics */
+  --bg-color: hsl(24, 25%, 7%);
+  --bg-secondary: hsl(24, 20%, 11%);
+  --card-bg: hsl(24, 18%, 13%);
+  --text-color: hsl(24, 20%, 95%);
+  --text-muted: hsl(24, 10%, 70%);
+  --border-color: hsl(24, 15%, 20%);
+  
+  --primary-light: hsl(24, 35%, 15%);
+  --secondary-light: hsl(42, 35%, 14%);
+  --success-light: hsl(142, 40%, 14%);
+  --warning-light: hsl(38, 40%, 14%);
+  --info-light: hsl(210, 40%, 14%);
+  
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-primary);
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+button {
+  font-family: var(--font-primary);
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: none;
+  transition: all var(--transition-fast);
+}
+
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: 16px; /* Prevents auto-zoom on iOS */
+  outline: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-color);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
