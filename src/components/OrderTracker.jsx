@@ -306,13 +306,29 @@ export const OrderTracker = ({ onBackToMenu }) => {
             </div>
 
             <div className="upi-instructions">
-              <a 
-                href={upiLink}
-                className="btn-primary mt-4" 
-                style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
-              >
-                Open Payment App
-              </a>
+              {/* UPI Payment Link */}
+            <button
+              className="btn-primary mt-4"
+              style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
+              onClick={() => {
+                window.open(upiLink, '_blank');
+                setTimeout(() => {
+                  window.open(getWhatsAppLink(), '_blank');
+                }, 2000);
+              }}
+            >
+              Open Payment App & Send WhatsApp
+            </button>
+            {/* WhatsApp Order Details */}
+            <a
+              href={getWhatsAppLink()}
+              className="btn-primary mt-2"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
+            >
+              Send Order Details via WhatsApp
+            </a>
               <p className="order-details-meta mt-2">
                 Works on GPay, PhonePe, Paytm, BHIM and netbanking apps.
               </p>
