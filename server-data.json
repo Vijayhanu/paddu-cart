@@ -11,7 +11,7 @@
     },
     {
       "id": "m2",
-      "name": "Masala Paddu",
+      "name": "Masala",
       "price": 50,
       "category": "Masala",
       "description": "Prepared with spiced green chillies, fresh coriander, ginger, and curry leaves.",
@@ -76,6 +76,135 @@
       "time_preparing": "2026-06-06T09:34:04.780Z",
       "time_ready": "2026-06-06T09:34:07.657Z",
       "time_delivered": "2026-06-06T09:34:10.444Z"
+    },
+    {
+      "id": "o_1780742168944",
+      "orderNumber": 1002,
+      "timestamp": "2026-06-06T10:36:08.944Z",
+      "status": "Delivered",
+      "feedbackSubmitted": false,
+      "orderType": "parcel",
+      "tableNumber": null,
+      "items": [
+        {
+          "id": "m1",
+          "name": "Plain Paddu",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50,
+      "time_preparing": "2026-06-06T10:37:03.158Z",
+      "time_ready": "2026-06-06T10:37:05.674Z",
+      "time_delivered": "2026-06-06T10:37:08.820Z"
+    },
+    {
+      "id": "o_1780744774291",
+      "orderNumber": 1003,
+      "timestamp": "2026-06-06T11:19:34.291Z",
+      "status": "Pending",
+      "feedbackSubmitted": false,
+      "orderType": "dine-in",
+      "tableNumber": "",
+      "items": [
+        {
+          "id": "m1",
+          "name": "Plain Paddu",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50
+    },
+    {
+      "id": "o_1780745191004",
+      "orderNumber": 1004,
+      "timestamp": "2026-06-06T11:26:31.004Z",
+      "status": "Pending",
+      "feedbackSubmitted": false,
+      "orderType": "dine-in",
+      "tableNumber": "",
+      "items": [
+        {
+          "id": "m1",
+          "name": "Plain Paddu",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50
+    },
+    {
+      "id": "o_1780745212680",
+      "orderNumber": 1005,
+      "timestamp": "2026-06-06T11:26:52.680Z",
+      "status": "Pending",
+      "feedbackSubmitted": false,
+      "orderType": "dine-in",
+      "tableNumber": "",
+      "items": [
+        {
+          "id": "m2",
+          "name": "Masala",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50
+    },
+    {
+      "id": "o_1780745570286",
+      "orderNumber": 1006,
+      "timestamp": "2026-06-06T11:32:50.287Z",
+      "status": "Pending",
+      "feedbackSubmitted": false,
+      "orderType": "dine-in",
+      "tableNumber": "",
+      "items": [
+        {
+          "id": "m1",
+          "name": "Plain Paddu",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50
+    },
+    {
+      "id": "o_1780746087016",
+      "orderNumber": 1007,
+      "timestamp": "2026-06-06T11:41:27.016Z",
+      "status": "Pending",
+      "feedbackSubmitted": false,
+      "orderType": "dine-in",
+      "tableNumber": "",
+      "items": [
+        {
+          "id": "m1",
+          "name": "Plain Paddu",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50
+    },
+    {
+      "id": "o_1780746215495",
+      "orderNumber": 1008,
+      "timestamp": "2026-06-06T11:43:35.495Z",
+      "status": "Pending",
+      "feedbackSubmitted": false,
+      "orderType": "dine-in",
+      "tableNumber": "",
+      "items": [
+        {
+          "id": "m1",
+          "name": "Plain Paddu",
+          "price": 50,
+          "quantity": 1
+        }
+      ],
+      "totalPrice": 50
     }
   ],
   "feedback": [],

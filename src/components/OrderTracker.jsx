@@ -75,6 +75,22 @@ export const OrderTracker = ({ onBackToMenu }) => {
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
 
+  // Open payment app and then automatically send WhatsApp receipt after a short delay
+  const handleOpenPayment = () => {
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
+    if (isMobile) {
+      // Direct navigation triggers the UPI app on mobile devices
+      window.location.href = upiLink;
+    } else {
+      // On desktop, inform the user to open the link on their phone or use the QR code
+      alert('UPI link can be opened on a mobile device. Please scan the QR code or open this link on your phone.');
+    }
+    // Wait 5 seconds for user to complete payment, then open WhatsApp link
+    setTimeout(() => {
+      window.open(getWhatsAppLink(), '_blank');
+    }, 5000);
+  };
+
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     if (rating === 0) {
@@ -214,17 +230,6 @@ export const OrderTracker = ({ onBackToMenu }) => {
             <CreditCard size={18} /> Pay with UPI (GPay / PhonePe / Paytm)
           </button>
           
-          <a 
-            href={getWhatsAppLink()} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="payment-btn whatsapp"
-            style={{ textDecoration: 'none' }}
-          >
-            <MessageSquare size={18} /> Send Receipt on WhatsApp
-          </a>
-
-          
         </div>
       </div>
 
@@ -307,28 +312,13 @@ export const OrderTracker = ({ onBackToMenu }) => {
 
             <div className="upi-instructions">
               {/* UPI Payment Link */}
-            <button
-              className="btn-primary mt-4"
-              style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
-              onClick={() => {
-                window.open(upiLink, '_blank');
-                setTimeout(() => {
-                  window.open(getWhatsAppLink(), '_blank');
-                }, 2000);
-              }}
-            >
-              Open Payment App & Send WhatsApp
-            </button>
-            {/* WhatsApp Order Details */}
-            <a
-              href={getWhatsAppLink()}
-              className="btn-primary mt-2"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
-            >
-              Send Order Details via WhatsApp
-            </a>
+              <button
+                className="btn-primary mt-4"
+                style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
+                onClick={handleOpenPayment}
+              >
+                Open Payment App
+              </button>
               <p className="order-details-meta mt-2">
                 Works on GPay, PhonePe, Paytm, BHIM and netbanking apps.
               </p>
