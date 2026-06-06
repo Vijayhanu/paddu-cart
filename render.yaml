@@ -1,0 +1,10 @@
+# render.yaml
+services:
+  - type: web
+    name: paddu-cart
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    staticPublishPath: dist
+    # Render automatically provides $PORT; Vite preview will bind to it.
