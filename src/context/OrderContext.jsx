@@ -18,8 +18,8 @@ export const OrderProvider = ({ children }) => {
     () => localStorage.getItem('paddu_theme') || 'light'
   );
   const [settings, setSettings] = useState({
-    upiId: '7795143969-2@ybl',
-    whatsappNumber: '+917795143969',
+    upiId: 'BHARATPE2M0L0E1O2Y57508@unitype',
+    whatsappNumber: '+919880243924',
     preparationTime: '15'
   });
   const [isServerConnected, setIsServerConnected] = useState(false);
