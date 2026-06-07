@@ -94,9 +94,9 @@ export const OrderTracker = ({ onBackToMenu }) => {
     const payName = 'Paddu Point';
     const cleanUpiId = settings.upiId.replace(/\s+/g, '');
     
-    // We omit amount (&am=) and transaction note (&tn=) from browser intents
-    // to guarantee GPay/PhonePe/Paytm will not decline for security reasons.
-    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR`;
+    // We include the amount (&am=) directly based on cart value as requested,
+    // but exclude transaction note (&tn=) to avoid triggering security restrictions on P2P intents.
+    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&cu=INR`;
     
     if (isAndroid) {
       switch (app) {
@@ -542,7 +542,7 @@ export const OrderTracker = ({ onBackToMenu }) => {
               </div>
               
               <p className="order-details-meta mt-2" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', textAlign: 'center' }}>
-                💡 Note: Please enter the amount (₹{currentOrder.totalPrice}) manually inside GPay/PhonePe.
+                💡 Note: Google Pay/PhonePe will open with the exact amount (₹{currentOrder.totalPrice}) pre-filled automatically.
               </p>
             </div>
           </div>
