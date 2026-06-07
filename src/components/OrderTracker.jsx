@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useOrder } from '../context/OrderContext';
 import { QRCodeSVG } from 'qrcode.react';
-import { Check, Clock, Utensils, MessageSquare, CreditCard, ChevronRight, X, Star } from 'lucide-react';
+import { Check, Clock, Utensils, MessageSquare, CreditCard, ChevronRight, X, Star, Copy } from 'lucide-react';
 
 export const OrderTracker = ({ onBackToMenu }) => {
   const { currentOrder, clearCurrentOrder, settings, submitFeedback } = useOrder();
@@ -9,6 +9,15 @@ export const OrderTracker = ({ onBackToMenu }) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
+  const [hasOpenedPayment, setHasOpenedPayment] = useState(false);
+  const [isPaymentConfirmed, setIsPaymentConfirmed] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyUpi = () => {
+    navigator.clipboard.writeText(settings.upiId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   // Custom confetti dots for order success celebration
   const [confettiDots, setConfettiDots] = useState([]);
@@ -218,20 +227,76 @@ export const OrderTracker = ({ onBackToMenu }) => {
       <div className="payment-section">
         <h3>Pay & Notify</h3>
         <p className="order-details-meta" style={{ marginBottom: '16px' }}>
-          Settle the payment using UPI, then click the WhatsApp button to send your order details to the vendor.
+          Complete the UPI payment first, then verify and send your order details to the vendor's WhatsApp.
         </p>
 
-        <div className="payment-methods">
-          <button className="payment-btn upi" onClick={() => setShowUpiModal(true)}>
-            <CreditCard size={18} /> Pay with UPI (GPay / PhonePe / Paytm / QR)
-          </button>
-          
-          <button 
-            className="payment-btn whatsapp" 
-            onClick={() => window.open(getWhatsAppLink(), '_blank')}
-          >
-            <MessageSquare size={18} /> Send Order to WhatsApp (After Payment)
-          </button>
+        <div className="payment-methods" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Step 1 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ background: 'var(--primary)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', fontSize: '11px' }}>1</span>
+              Settle Payment via UPI
+            </span>
+            <button 
+              className="payment-btn upi" 
+              onClick={() => { setShowUpiModal(true); setHasOpenedPayment(true); }}
+              style={{ padding: '12px' }}
+            >
+              <CreditCard size={18} /> Pay with UPI / Scan QR
+            </button>
+          </div>
+
+          {/* Step 2 */}
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: '8px', 
+            opacity: hasOpenedPayment ? 1 : 0.5,
+            pointerEvents: hasOpenedPayment ? 'auto' : 'none',
+            transition: 'all 0.3s ease',
+            borderTop: '1px dashed var(--border-color)',
+            paddingTop: '12px'
+          }}>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ background: hasOpenedPayment ? 'var(--primary)' : 'var(--border-color)', color: 'white', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifySelf: 'center', justifyContent: 'center', fontSize: '11px' }}>2</span>
+              Confirm Payment & Send to WhatsApp
+            </span>
+            
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px', 
+              fontSize: '13px', 
+              cursor: hasOpenedPayment ? 'pointer' : 'default',
+              color: 'var(--text-color)',
+              background: 'var(--bg-secondary)',
+              padding: '10px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-color)'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={isPaymentConfirmed} 
+                disabled={!hasOpenedPayment}
+                onChange={(e) => setIsPaymentConfirmed(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: hasOpenedPayment ? 'pointer' : 'default' }}
+              />
+              <span style={{ fontWeight: 600 }}>I have completed the payment of ₹{currentOrder.totalPrice}</span>
+            </label>
+            
+            <button 
+              className="payment-btn whatsapp" 
+              disabled={!isPaymentConfirmed}
+              onClick={() => window.open(getWhatsAppLink(), '_blank')}
+              style={{ 
+                opacity: isPaymentConfirmed ? 1 : 0.6,
+                cursor: isPaymentConfirmed ? 'pointer' : 'not-allowed',
+                padding: '12px'
+              }}
+            >
+              <MessageSquare size={18} /> Send Order to WhatsApp
+            </button>
+          </div>
         </div>
       </div>
 
@@ -307,17 +372,64 @@ export const OrderTracker = ({ onBackToMenu }) => {
               <QRCodeSVG value={upiLink} size={200} level="H" />
             </div>
 
-            <div className="upi-meta-info">
-              <div>Amount to Pay: <b>₹{currentOrder.totalPrice}</b></div>
-              <div style={{ wordBreak: 'break-all', marginTop: '4px' }}>UPI ID: <b>{settings.upiId}</b></div>
+            <div className="upi-meta-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <div>Amount to Pay: <b style={{ fontSize: '18px', color: 'var(--primary)' }}>₹{currentOrder.totalPrice}</b></div>
+              
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '8px', 
+                background: 'var(--bg-secondary)', 
+                padding: '8px 12px', 
+                borderRadius: '8px', 
+                border: '1px solid var(--border-color)', 
+                marginTop: '4px',
+                width: '100%',
+                justifyContent: 'space-between'
+              }}>
+                <span style={{ fontSize: '12px', wordBreak: 'break-all', color: 'var(--text-color)' }}>
+                  UPI ID: <b>{settings.upiId}</b>
+                </span>
+                <button 
+                  onClick={handleCopyUpi} 
+                  style={{ 
+                    background: 'none', 
+                    border: 'none', 
+                    color: 'var(--primary)', 
+                    cursor: 'pointer', 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    padding: '4px'
+                  }}
+                  title="Copy UPI ID"
+                >
+                  {copied ? <Check size={16} color="var(--success)" /> : <Copy size={16} />}
+                </button>
+              </div>
+              {copied && <span style={{ fontSize: '11px', color: 'var(--success)', fontWeight: '700' }}>UPI ID Copied!</span>}
+            </div>
+
+            {/* Decline Helper Advice */}
+            <div style={{
+              margin: '12px 0',
+              padding: '10px',
+              backgroundColor: 'hsl(35, 100%, 96%)',
+              border: '1px solid hsl(35, 100%, 88%)',
+              borderRadius: '8px',
+              fontSize: '11px',
+              color: 'hsl(35, 80%, 25%)',
+              textAlign: 'left',
+              lineHeight: '1.4'
+            }}>
+              <b>💡 Security Tip:</b> If your payment app declines the transaction, copy the UPI ID above and paste it directly into GPay/PhonePe to pay, or scan the QR Code.
             </div>
 
             <div className="upi-instructions">
               {/* UPI Payment Link */}
               <button
-                className="btn-primary mt-4"
-                style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center' }}
-                onClick={handleOpenPayment}
+                className="btn-primary"
+                style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center', width: '100%' }}
+                onClick={() => { handleOpenPayment(); setHasOpenedPayment(true); }}
               >
                 Open Payment App
               </button>
