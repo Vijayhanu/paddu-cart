@@ -55,10 +55,13 @@ export const OrderTracker = ({ onBackToMenu }) => {
   const statuses = ['Pending', 'Preparing', 'Ready', 'Delivered'];
   const currentStatusIndex = statuses.indexOf(currentOrder.status);
 
-  // Generate UPI payment deep link
+  // Generate UPI payment deep links
   const payName = 'Paddu Point';
   const cleanUpiId = settings.upiId.replace(/\s+/g, '');
-  const upiLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&tn=Paddu%20Point%20Order%20${currentOrder.orderNumber}&cu=INR`;
+  // Link for QR Code (includes amount and transaction note, trusted via physical camera scan)
+  const upiQrLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&tn=Paddu%20Point%20Order%20${currentOrder.orderNumber}&cu=INR`;
+  // Link for direct mobile app launch (excludes amount and note to bypass browser security declines on personal accounts)
+  const upiMobileLink = `upi://pay?pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR`;
 
   // Generate WhatsApp message text
   const getWhatsAppLink = () => {
@@ -88,8 +91,8 @@ export const OrderTracker = ({ onBackToMenu }) => {
   const handleOpenPayment = () => {
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
     if (isMobile) {
-      // Direct navigation triggers the UPI app on mobile devices
-      window.location.href = upiLink;
+      // Direct navigation triggers the UPI app on mobile devices using the simplified link (no amount/note)
+      window.location.href = upiMobileLink;
     } else {
       // On desktop, guide user to scan QR
       alert(`UPI deep links are only supported on mobile devices. Please scan the QR code on your screen using your phone's GPay, PhonePe, or Paytm app.`);
@@ -369,7 +372,7 @@ export const OrderTracker = ({ onBackToMenu }) => {
             
             {/* Clickable UPI link for mobile, QR for desktop */}
             <div className="upi-qr-wrapper">
-              <QRCodeSVG value={upiLink} size={200} level="H" />
+              <QRCodeSVG value={upiQrLink} size={200} level="H" />
             </div>
 
             <div className="upi-meta-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -433,7 +436,10 @@ export const OrderTracker = ({ onBackToMenu }) => {
               >
                 Open Payment App
               </button>
-              <p className="order-details-meta mt-2">
+              <p className="order-details-meta mt-2" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>
+                💡 Note: You must enter the payment amount (₹{currentOrder.totalPrice}) manually inside GPay/PhonePe.
+              </p>
+              <p className="order-details-meta mt-1">
                 Works on GPay, PhonePe, Paytm, BHIM and netbanking apps.
               </p>
             </div>
