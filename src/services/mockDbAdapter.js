@@ -32,7 +32,7 @@ function setStored(key, value) {
 if (!localStorage.getItem(MENU_KEY)) setStored(MENU_KEY, []);
 if (!localStorage.getItem(ORDERS_KEY)) setStored(ORDERS_KEY, []);
 if (!localStorage.getItem(SETTINGS_KEY))
-  setStored(SETTINGS_KEY, { upiId: '7795143969-2@ybl', whatsappNumber: '+917795143969', preparationTime: '15' });
+ setStored(SETTINGS_KEY, { upiId: 'BHARATPE2M0L0E1O2Y57508@unitype', whatsappNumber: '+919880243924', preparationTime: '15' });
 if (!localStorage.getItem(CONNECTION_KEY)) setStored(CONNECTION_KEY, true);
 if (!localStorage.getItem(FEEDBACK_KEY)) setStored(FEEDBACK_KEY, []);
 
