@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useOrder } from '../context/OrderContext';
-import { dbService } from '../services/dbAdapter';
+import { mockDbService as dbService } from '../services/mockDbAdapter';
 import { QRCodeSVG } from 'qrcode.react';
 import { Plus, Trash2, Edit2, Settings, ListFilter, Printer, LogOut, CheckCircle, Clock, Star, MessageSquare, X } from 'lucide-react';
 

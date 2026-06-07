@@ -7,6 +7,7 @@ const MENU_KEY = 'paddu_menu';
 const ORDERS_KEY = 'paddu_orders';
 const SETTINGS_KEY = 'paddu_settings';
 const CONNECTION_KEY = 'paddu_connection';
+const FEEDBACK_KEY = 'paddu_feedback';
 
 // Helper to safely parse JSON from localStorage
 function getStored(key, fallback) {
@@ -33,6 +34,7 @@ if (!localStorage.getItem(ORDERS_KEY)) setStored(ORDERS_KEY, []);
 if (!localStorage.getItem(SETTINGS_KEY))
   setStored(SETTINGS_KEY, { upiId: '7795143969-2@ybl', whatsappNumber: '+917795143969', preparationTime: '15' });
 if (!localStorage.getItem(CONNECTION_KEY)) setStored(CONNECTION_KEY, true);
+if (!localStorage.getItem(FEEDBACK_KEY)) setStored(FEEDBACK_KEY, []);
 
 // Subscription pools – simple Set of callbacks
 const menuSubs = new Set();
@@ -121,7 +123,7 @@ export const mockDbService = {
     notify(ordersSubs, orders);
     // also notify any single‑order listeners
     notifySingleOrder(newOrder.id, newOrder);
-    return { order: newOrder };
+    return newOrder;
   },
   updateOrderStatus: async (orderId, status) => {
     const orders = getStored(ORDERS_KEY, []);
@@ -149,10 +151,33 @@ export const mockDbService = {
     return true;
   },
 
-  // ---------- Feedback (optional) ----------
-  submitFeedback: async feedback => {
-    // For a static demo we simply log it; no persistence needed.
-    console.log('[mockDbAdapter] feedback received', feedback);
-    return { feedback };
+  // ---------- Feedback ----------
+  submitFeedback: async feedbackData => {
+    const feedbacks = getStored(FEEDBACK_KEY, []);
+    const fb = {
+      id: 'f_' + Date.now(),
+      timestamp: new Date().toISOString(),
+      ...feedbackData
+    };
+    feedbacks.push(fb);
+    setStored(FEEDBACK_KEY, feedbacks);
+    
+    // Mark order as feedback-submitted in local orders storage
+    if (feedbackData.orderId) {
+      const orders = getStored(ORDERS_KEY, []);
+      const oi = orders.findIndex((o) => o.id === feedbackData.orderId);
+      if (oi > -1) {
+        orders[oi].feedbackSubmitted = true;
+        setStored(ORDERS_KEY, orders);
+        notify(ordersSubs, orders);
+        notifySingleOrder(feedbackData.orderId, orders[oi]);
+      }
+    }
+    
+    console.log('[mockDbAdapter] feedback received & stored', fb);
+    return fb;
+  },
+  getFeedback: async () => {
+    return getStored(FEEDBACK_KEY, []);
   }
 };
