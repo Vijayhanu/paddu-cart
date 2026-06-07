@@ -87,15 +87,41 @@ export const OrderTracker = ({ onBackToMenu }) => {
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
 
-  // Open payment app on mobile devices
-  const handleOpenPayment = () => {
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
-    if (isMobile) {
-      // Direct navigation triggers the UPI app on mobile devices using the simplified link (no amount/note)
-      window.location.href = upiMobileLink;
+  // Generate platform-specific direct launch link for GPay, PhonePe, or Paytm
+  const getAppUpiLink = (app) => {
+    const isAndroid = /Android/.test(navigator.userAgent);
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const payName = 'Paddu Point';
+    const cleanUpiId = settings.upiId.replace(/\s+/g, '');
+    
+    // We omit amount (&am=) and transaction note (&tn=) from browser intents
+    // to guarantee GPay/PhonePe/Paytm will not decline for security reasons.
+    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR`;
+    
+    if (isAndroid) {
+      switch (app) {
+        case 'gpay':
+          return `intent://pay?${query}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+        case 'phonepe':
+          return `intent://pay?${query}#Intent;scheme=upi;package=com.phonepe.app;end`;
+        case 'paytm':
+          return `intent://pay?${query}#Intent;scheme=upi;package=net.one97.paytm;end`;
+        default:
+          return `upi://pay?${query}`;
+      }
+    } else if (isIOS) {
+      switch (app) {
+        case 'gpay':
+          return `gpay://upi/pay?${query}`;
+        case 'phonepe':
+          return `phonepe://upi/pay?${query}`;
+        case 'paytm':
+          return `paytmmp://upi/pay?${query}`;
+        default:
+          return `upi://pay?${query}`;
+      }
     } else {
-      // On desktop, guide user to scan QR
-      alert(`UPI deep links are only supported on mobile devices. Please scan the QR code on your screen using your phone's GPay, PhonePe, or Paytm app.`);
+      return `upi://pay?${query}`;
     }
   };
 
@@ -427,20 +453,96 @@ export const OrderTracker = ({ onBackToMenu }) => {
               <b>💡 Security Tip:</b> If your payment app declines the transaction, copy the UPI ID above and paste it directly into GPay/PhonePe to pay, or scan the QR Code.
             </div>
 
-            <div className="upi-instructions">
-              {/* UPI Payment Link */}
-              <button
-                className="btn-primary"
-                style={{ textDecoration: 'none', display: 'flex', justifyContent: 'center', width: '100%' }}
-                onClick={() => { handleOpenPayment(); setHasOpenedPayment(true); }}
-              >
-                Open Payment App
-              </button>
-              <p className="order-details-meta mt-2" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>
-                💡 Note: You must enter the payment amount (₹{currentOrder.totalPrice}) manually inside GPay/PhonePe.
-              </p>
-              <p className="order-details-meta mt-1">
-                Works on GPay, PhonePe, Paytm, BHIM and netbanking apps.
+            <div className="upi-app-selector" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-color)', marginBottom: '4px', textAlign: 'center' }}>
+                Open Payment App on your Phone:
+              </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <a
+                  href={getAppUpiLink('gpay')}
+                  onClick={() => setHasOpenedPayment(true)}
+                  style={{ 
+                    textDecoration: 'none', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    background: '#1a73e8', 
+                    color: 'white', 
+                    padding: '10px', 
+                    borderRadius: '8px', 
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    textAlign: 'center'
+                  }}
+                >
+                  Google Pay
+                </a>
+
+                <a
+                  href={getAppUpiLink('phonepe')}
+                  onClick={() => setHasOpenedPayment(true)}
+                  style={{ 
+                    textDecoration: 'none', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    background: '#5f259f', 
+                    color: 'white', 
+                    padding: '10px', 
+                    borderRadius: '8px', 
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    textAlign: 'center'
+                  }}
+                >
+                  PhonePe
+                </a>
+
+                <a
+                  href={getAppUpiLink('paytm')}
+                  onClick={() => setHasOpenedPayment(true)}
+                  style={{ 
+                    textDecoration: 'none', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    background: '#0099ff', 
+                    color: 'white', 
+                    padding: '10px', 
+                    borderRadius: '8px', 
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    textAlign: 'center'
+                  }}
+                >
+                  Paytm
+                </a>
+
+                <a
+                  href={getAppUpiLink('other')}
+                  onClick={() => setHasOpenedPayment(true)}
+                  style={{ 
+                    textDecoration: 'none', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    background: 'var(--bg-secondary)', 
+                    color: 'var(--text-color)', 
+                    padding: '10px', 
+                    borderRadius: '8px', 
+                    fontWeight: '700',
+                    fontSize: '12px',
+                    border: '1px solid var(--border-color)',
+                    textAlign: 'center'
+                  }}
+                >
+                  Other App
+                </a>
+              </div>
+              
+              <p className="order-details-meta mt-2" style={{ fontSize: '11px', color: 'var(--primary)', fontWeight: '700', textAlign: 'center' }}>
+                💡 Note: Please enter the amount (₹{currentOrder.totalPrice}) manually inside GPay/PhonePe.
               </p>
             </div>
           </div>
