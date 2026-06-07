@@ -75,20 +75,16 @@ export const OrderTracker = ({ onBackToMenu }) => {
     return `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
   };
 
-  // Open payment app and then automatically send WhatsApp receipt after a short delay
+  // Open payment app on mobile devices
   const handleOpenPayment = () => {
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(navigator.userAgent);
     if (isMobile) {
       // Direct navigation triggers the UPI app on mobile devices
       window.location.href = upiLink;
     } else {
-      // On desktop, open the UPI link in a new tab (user can copy or scan QR)
-      window.open(upiLink, '_blank');
+      // On desktop, guide user to scan QR
+      alert(`UPI deep links are only supported on mobile devices. Please scan the QR code on your screen using your phone's GPay, PhonePe, or Paytm app.`);
     }
-    // Wait 10 seconds for user to complete payment, then open WhatsApp link
-    setTimeout(() => {
-      window.open(getWhatsAppLink(), '_blank');
-    }, 10000);
   };
 
   const handleFeedbackSubmit = async (e) => {
@@ -222,14 +218,20 @@ export const OrderTracker = ({ onBackToMenu }) => {
       <div className="payment-section">
         <h3>Pay & Notify</h3>
         <p className="order-details-meta" style={{ marginBottom: '16px' }}>
-          Select how you want to settle the payment and notify the food cart
+          Settle the payment using UPI, then click the WhatsApp button to send your order details to the vendor.
         </p>
 
         <div className="payment-methods">
           <button className="payment-btn upi" onClick={() => setShowUpiModal(true)}>
-            <CreditCard size={18} /> Pay with UPI (GPay / PhonePe / Paytm)
+            <CreditCard size={18} /> Pay with UPI (GPay / PhonePe / Paytm / QR)
           </button>
           
+          <button 
+            className="payment-btn whatsapp" 
+            onClick={() => window.open(getWhatsAppLink(), '_blank')}
+          >
+            <MessageSquare size={18} /> Send Order to WhatsApp (After Payment)
+          </button>
         </div>
       </div>
 
