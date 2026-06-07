@@ -94,10 +94,12 @@ export const OrderTracker = ({ onBackToMenu }) => {
     const payName = 'Paddu Point';
     const cleanUpiId = settings.upiId.replace(/\s+/g, '');
     
-    // We include the amount (&am=) directly based on cart value as requested,
-    // but exclude transaction note (&tn=) to avoid triggering security restrictions on P2P intents.
-    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&am=${currentOrder.totalPrice}&cu=INR`;
-    
+    // IMPORTANT: Omit both &am= (amount) and &tn= (note).
+    // When amount is pre-filled in a UPI deep-link to an unverified UPI ID, NPCI/banks
+    // auto-decline the moment customer chooses "Bank Account" as funding source —
+    // showing "Your payment is declined for security reasons. Please try using mobile
+    // number, UPI, QR". Letting the customer enter the amount manually clears this flag.
+    const query = `pa=${cleanUpiId}&pn=${encodeURIComponent(payName)}&cu=INR`;
     if (isAndroid) {
       switch (app) {
         case 'gpay':
